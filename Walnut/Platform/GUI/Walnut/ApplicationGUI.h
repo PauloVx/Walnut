@@ -52,6 +52,7 @@ namespace Walnut {
 		// Custom titlebar look: its background, and whether it shows Name centred
 		uint32_t TitlebarColor = IM_COL32(21, 21, 21, 255);
 		bool TitlebarShowsName = true;
+		bool TitlebarShowsIcon = true;
 
 		// Uses a dockspace which takes up the
 		// entire window

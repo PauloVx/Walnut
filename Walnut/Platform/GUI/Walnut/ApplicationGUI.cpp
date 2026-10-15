@@ -721,6 +721,7 @@ namespace Walnut {
 		// fgDrawList->AddRect(titlebarMin, titlebarMax, UI::Colors::Theme::invalidPrefab);
 
 		// Logo
+		if (m_Specification.TitlebarShowsIcon)
 		{
 			const int logoWidth = 48;// m_LogoTex->GetWidth();
 			const int logoHeight = 48;// m_LogoTex->GetHeight();
