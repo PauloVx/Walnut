@@ -22,6 +22,16 @@ struct GLFWwindow;
 
 namespace Walnut {
 
+	// A TrueType font the application adds to the atlas, found later with Application::GetFont(Name)
+	struct FontSpecification
+	{
+		std::string Name;
+		const void* Data = nullptr;   // TTF bytes; must outlive the application
+		size_t DataSize = 0;
+		float SizePixels = 20.0f;
+		bool Default = false;         // replaces Roboto as ImGui's default font
+	};
+
 	struct ApplicationSpecification
 	{
 		std::string Name = "Walnut App";
@@ -35,6 +45,13 @@ namespace Walnut {
 		// Uses custom Walnut titlebar instead
 		// of Windows default
 		bool CustomTitlebar = false;
+
+		// Fonts added after Walnut's own (Default, Bold, Italic)
+		std::vector<FontSpecification> Fonts;
+
+		// Custom titlebar look: its background, and whether it shows Name centred
+		uint32_t TitlebarColor = IM_COL32(21, 21, 21, 255);
+		bool TitlebarShowsName = true;
 
 		// Uses a dockspace which takes up the
 		// entire window
@@ -77,10 +94,14 @@ namespace Walnut {
 
 		bool IsMaximized() const;
 		std::shared_ptr<Image> GetApplicationIcon() const { return m_AppHeaderIcon; }
+		// Replaces the icon drawn in the custom titlebar (Walnut's own by default)
+		void SetApplicationIcon(std::shared_ptr<Image> icon) { if (icon) m_AppHeaderIcon = std::move(icon); }
 
 		float GetTime();
 		GLFWwindow* GetWindowHandle() const { return m_WindowHandle; }
 		bool IsTitleBarHovered() const { return m_TitleBarHovered; }
+		// Height of the custom titlebar drawn at the top of the window; 0 with the system's own frame
+		float GetTitlebarHeight() const { return m_Specification.CustomTitlebar ? 58.0f : 0.0f; }
 
 		static VkInstance GetInstance();
 		static VkPhysicalDevice GetPhysicalDevice();

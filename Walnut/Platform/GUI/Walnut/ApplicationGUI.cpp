@@ -465,9 +465,14 @@ namespace Walnut {
 		glfwGetMonitorPos(primaryMonitor, &monitorX, &monitorY);
 
 		glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-		glfwWindowHint(GLFW_RESIZABLE, m_Specification.WindowResizeable ? GLFW_TRUE : GLFW_FALSE);
+		// TheCherno/GLFW removes the system caption only from windows with a thick (resizable) frame, so a fixed-size
+		// window with a custom titlebar is created resizable and then held at its size
+		const bool holdSize = !m_Specification.WindowResizeable && m_Specification.CustomTitlebar;
+		glfwWindowHint(GLFW_RESIZABLE, (m_Specification.WindowResizeable || holdSize) ? GLFW_TRUE : GLFW_FALSE);
 
 		m_WindowHandle = glfwCreateWindow(m_Specification.Width, m_Specification.Height, m_Specification.Name.c_str(), NULL, NULL);
+		if (holdSize)
+			glfwSetWindowSizeLimits(m_WindowHandle, (int)m_Specification.Width, (int)m_Specification.Height, (int)m_Specification.Width, (int)m_Specification.Height);
 
 		if (m_Specification.CenterWindow)
 		{
@@ -579,6 +584,17 @@ namespace Walnut {
 		s_Fonts["Bold"] = io.Fonts->AddFontFromMemoryTTF((void*)g_RobotoBold, sizeof(g_RobotoBold), 20.0f, &fontConfig);
 		s_Fonts["Italic"] = io.Fonts->AddFontFromMemoryTTF((void*)g_RobotoItalic, sizeof(g_RobotoItalic), 20.0f, &fontConfig);
 		io.FontDefault = robotoFont;
+		for (const FontSpecification& font : m_Specification.Fonts)
+		{
+			if (!font.Data || !font.DataSize)
+				continue;
+			ImFont* added = io.Fonts->AddFontFromMemoryTTF(const_cast<void*>(font.Data), (int)font.DataSize, font.SizePixels, &fontConfig);
+			if (!added)
+				continue;
+			s_Fonts[font.Name] = added;
+			if (font.Default)
+				io.FontDefault = added;
+		}
 
 		// Upload Fonts
 		{
@@ -700,7 +716,7 @@ namespace Walnut {
 									 ImGui::GetCursorScreenPos().y + titlebarHeight };
 		auto* bgDrawList = ImGui::GetBackgroundDrawList();
 		auto* fgDrawList = ImGui::GetForegroundDrawList();
-		bgDrawList->AddRectFilled(titlebarMin, titlebarMax, UI::Colors::Theme::titlebar);
+		bgDrawList->AddRectFilled(titlebarMin, titlebarMax, m_Specification.TitlebarColor);
 		// DEBUG TITLEBAR BOUNDS
 		// fgDrawList->AddRect(titlebarMin, titlebarMax, UI::Colors::Theme::invalidPrefab);
 
@@ -754,6 +770,7 @@ namespace Walnut {
 			ImGui::ResumeLayout();
 		}
 
+		if (m_Specification.TitlebarShowsName)
 		{
 			// Centered Window title
 			ImVec2 currentCursorPos = ImGui::GetCursorPos();
