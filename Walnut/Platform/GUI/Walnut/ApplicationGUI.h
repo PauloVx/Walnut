@@ -43,6 +43,12 @@ namespace Walnut {
 		// Window will be created in the center
 		// of primary monitor
 		bool CenterWindow = false;
+
+		// ImGui windows can be dragged out as OS windows (Windows only: GLFW cannot place windows on Wayland)
+		bool UseViewports = true;
+
+		// Where WALNUT.log and APP.log go; empty logs to the console only
+		std::filesystem::path LogDirectory;
 	};
 
 	class Application

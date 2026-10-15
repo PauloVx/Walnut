@@ -431,7 +431,13 @@ namespace Walnut {
 	void Application::Init()
 	{
 		// Intialize logging
-		Log::Init();
+		Log::Init(m_Specification.LogDirectory);
+
+#ifndef WL_PLATFORM_WINDOWS
+		// The custom titlebar relies on TheCherno/GLFW's Win32 hit testing; elsewhere keep the system frame
+		m_Specification.CustomTitlebar = false;
+		m_Specification.UseViewports = false;
+#endif
 
 		// Setup GLFW window
 		glfwSetErrorCallback(glfw_error_callback);
@@ -459,6 +465,7 @@ namespace Walnut {
 		glfwGetMonitorPos(primaryMonitor, &monitorX, &monitorY);
 
 		glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+		glfwWindowHint(GLFW_RESIZABLE, m_Specification.WindowResizeable ? GLFW_TRUE : GLFW_FALSE);
 
 		m_WindowHandle = glfwCreateWindow(m_Specification.Width, m_Specification.Height, m_Specification.Name.c_str(), NULL, NULL);
 
@@ -467,8 +474,6 @@ namespace Walnut {
 			glfwSetWindowPos(m_WindowHandle,
 				monitorX + (videoMode->width - m_Specification.Width) / 2,
 				monitorY + (videoMode->height - m_Specification.Height) / 2);
-
-			glfwSetWindowAttrib(m_WindowHandle, GLFW_RESIZABLE, m_Specification.WindowResizeable ? GLFW_TRUE : GLFW_FALSE);
 		}
 		
 		glfwShowWindow(m_WindowHandle);
@@ -523,7 +528,8 @@ namespace Walnut {
 		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls
 		//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
-		io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
+		if (m_Specification.UseViewports)
+			io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;     // Enable Multi-Viewport / Platform Windows
 		//io.ConfigViewportsNoAutoMerge = true;
 		//io.ConfigViewportsNoTaskBarIcon = true;
 
@@ -785,7 +791,9 @@ namespace Walnut {
 		}
 
 
-		// Maximize Button
+		// Maximize Button (not for fixed-size windows)
+		if (m_Specification.WindowResizeable)
+		{
 		ImGui::Spring(-1.0f, 17.0f);
 		UI::ShiftCursorY(8.0f);
 		{
@@ -806,6 +814,7 @@ namespace Walnut {
 			}
 
 			UI::DrawButtonImage(isMaximized ? m_IconRestore : m_IconMaximize, buttonColN, buttonColH, buttonColP);
+		}
 		}
 
 		// Close Button

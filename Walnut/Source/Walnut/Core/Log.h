@@ -12,6 +12,7 @@
 #include "spdlog/fmt/ostr.h"
 
 #include <map>
+#include <filesystem>
 
 #define WL_ASSERT_MESSAGE_BOX (!WL_DIST && WL_PLATFORM_WINDOWS)
 
@@ -41,7 +42,8 @@ namespace Walnut {
 		};
 
 	public:
-		static void Init();
+		// File logs go to logDirectory (WALNUT.log, APP.log) when it is not empty
+		static void Init(const std::filesystem::path& logDirectory = {});
 		static void Shutdown();
 
 		inline static std::shared_ptr<spdlog::logger>& GetCoreLogger() { return s_CoreLogger; }

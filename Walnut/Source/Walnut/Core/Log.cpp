@@ -12,35 +12,25 @@ namespace Walnut {
 	std::shared_ptr<spdlog::logger> Log::s_CoreLogger;
 	std::shared_ptr<spdlog::logger> Log::s_ClientLogger;
 
-	void Log::Init()
+	void Log::Init(const std::filesystem::path& logDirectory)
 	{
-		// Create "logs" directory if doesn't exist
-		std::string logsDirectory = "logs";
-		if (!std::filesystem::exists(logsDirectory))
-			std::filesystem::create_directories(logsDirectory);
+		std::vector<spdlog::sink_ptr> hazelSinks;
+		std::vector<spdlog::sink_ptr> appSinks;
 
-		std::vector<spdlog::sink_ptr> hazelSinks =
+		if (!logDirectory.empty())
 		{
-			std::make_shared<spdlog::sinks::basic_file_sink_mt>("logs/HAZEL.log", true),
-#if WL_HAS_CONSOLE
-			std::make_shared<spdlog::sinks::stdout_color_sink_mt>()
-#endif
-		};
-
-		std::vector<spdlog::sink_ptr> appSinks =
-		{
-			std::make_shared<spdlog::sinks::basic_file_sink_mt>("logs/APP.log", true),
-#if WL_HAS_CONSOLE
-			std::make_shared<spdlog::sinks::stdout_color_sink_mt>()
-#endif
-		};
-
-		hazelSinks[0]->set_pattern("[%T] [%l] %n: %v");
-		appSinks[0]->set_pattern("[%T] [%l] %n: %v");
+			std::filesystem::create_directories(logDirectory);
+			hazelSinks.push_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>((logDirectory / "WALNUT.log").string(), true));
+			appSinks.push_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>((logDirectory / "APP.log").string(), true));
+			hazelSinks.back()->set_pattern("[%T] [%l] %n: %v");
+			appSinks.back()->set_pattern("[%T] [%l] %n: %v");
+		}
 
 #if WL_HAS_CONSOLE
-		hazelSinks[1]->set_pattern("%^[%T] %n: %v%$");
-		appSinks[1]->set_pattern("%^[%T] %n: %v%$");
+		hazelSinks.push_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
+		appSinks.push_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
+		hazelSinks.back()->set_pattern("%^[%T] %n: %v%$");
+		appSinks.back()->set_pattern("%^[%T] %n: %v%$");
 #endif
 
 		s_CoreLogger = std::make_shared<spdlog::logger>("WALNUT", hazelSinks.begin(), hazelSinks.end());
